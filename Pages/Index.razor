@@ -1,0 +1,127 @@
+﻿@page "/"
+@using TestBotTelegram.Components;
+@using TestBotTelegram.Models;
+@using Telegram.Bot;
+@using Telegram.Bot.Exceptions;
+@using Telegram.Bot.Polling;
+@using Telegram.Bot.Types;
+@using Telegram.Bot.Types.Enums;
+@using System.Collections.Generic;
+
+<PageTitle>Index</PageTitle>
+
+<h1>Example Telegram bot!</h1>
+@if (botClient is null)
+{
+    
+    <h4 class='text-danger'>Error connection</h4>
+}
+else
+{
+    <h4 class='text-primary'>Success connection</h4>
+    @foreach (var item in MessagerUsers)
+    {
+        <div class="card" style="width: 18rem;">
+            <div class="card-body">
+                <h5 class="card-title @item.ClassName">@item.NameUser</h5>
+                <p class="card-text">@item.Message</p>
+            </div>
+        </div>
+    }
+}
+
+
+
+@code {
+
+    protected List<MessagerUser> MessagerUsers {get;set;}
+
+    protected TelegramBotClient? botClient { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        MessagerUsers=new List<MessagerUser>();
+        botClient = new TelegramBotClient("5537231548:AAHdxFT2LMmbY-Kcic1zo-l2-1S2-UhvO1w");
+        using var cts = new CancellationTokenSource();
+        var receiverOptions = new ReceiverOptions
+        {
+            AllowedUpdates = Array.Empty<UpdateType>()
+        };
+
+        botClient.StartReceiving(
+            updateHandler: HandleUpdateAsync,
+            pollingErrorHandler: HandlePollingErrorAsync,
+            receiverOptions: receiverOptions,
+            cancellationToken: cts.Token
+        );
+
+        var me = await botClient.GetMeAsync();
+    }
+
+    async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        if (update.Message is not { } message)
+            return;
+
+        if (message.Text is not { } messageText)
+            return;
+
+        var chatId = message.Chat.Id;
+
+        Console.WriteLine($"{message.Chat}");
+
+        if(messageText.Equals("/command2")){
+                Message sentMessage = await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: "Test Successes",
+                cancellationToken: cancellationToken);
+
+                MessagerUsers.Add(new MessagerUser(){
+                    NameUser=$"{message.From.FirstName} {message.From.LastName}" ,
+                    Message=messageText,
+                    ClassName="text-primary",
+                });
+
+                MessagerUsers.Add(new MessagerUser(){
+                    NameUser=$"@Bot" ,
+                    Message="Test Successes",
+                    ClassName="text-success",
+                });
+        }else{
+            Message sentMessage = await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: "You say " + messageText,
+                cancellationToken: cancellationToken);
+
+                MessagerUsers.Add(new MessagerUser(){
+                    NameUser=$"{message.From.FirstName} {message.From.LastName}" ,
+                    Message=messageText,
+                    ClassName="text-primary",
+                });
+
+                MessagerUsers.Add(new MessagerUser(){
+                    NameUser=$"@Bot" ,
+                    Message="You say "+messageText,
+                    ClassName="text-success",
+                });
+        }
+
+        StateHasChanged();
+        Console.WriteLine(MessagerUsers.Count());
+
+    }
+
+    Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+    {
+        var ErrorMessage = exception switch
+        {
+            ApiRequestException apiRequestException
+            => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+            _ => exception.ToString()
+        };
+
+        Console.WriteLine(ErrorMessage);
+        return Task.CompletedTask;
+    }
+
+}

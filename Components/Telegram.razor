@@ -1,0 +1,14 @@
+@using TestBotTelegram.Models;
+@using System.Collections.Generic;
+
+@if(userMessage.Count()!=0){
+    @foreach (var item in userMessage)
+    {
+        <div>@item.Message</div>
+    }
+    
+}
+@code{
+    [Parameter]
+    public List<MessagerUser> userMessage {get;set;}
+}
