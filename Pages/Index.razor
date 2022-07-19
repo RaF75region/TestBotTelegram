@@ -42,17 +42,10 @@ else
     {
         MessagerUsers=new List<MessagerUser>();
         botClient = new TelegramBotClient("5537231548:AAHdxFT2LMmbY-Kcic1zo-l2-1S2-UhvO1w");
-        using var cts = new CancellationTokenSource();
-        var receiverOptions = new ReceiverOptions
-        {
-            AllowedUpdates = Array.Empty<UpdateType>()
-        };
 
         botClient.StartReceiving(
             updateHandler: HandleUpdateAsync,
-            pollingErrorHandler: HandlePollingErrorAsync,
-            receiverOptions: receiverOptions,
-            cancellationToken: cts.Token
+            pollingErrorHandler: HandlePollingErrorAsync
         );
 
         var me = await botClient.GetMeAsync();
@@ -67,8 +60,6 @@ else
             return;
 
         var chatId = message.Chat.Id;
-
-        Console.WriteLine($"{message.Chat}");
 
         if(messageText.Equals("/command2")){
                 Message sentMessage = await botClient.SendTextMessageAsync(
